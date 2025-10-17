@@ -15,3 +15,4 @@ def cli(config, input, output):
     except Exception as e:
         click.echo(f"❌ Ошибка: {e}")
         raise
+    
