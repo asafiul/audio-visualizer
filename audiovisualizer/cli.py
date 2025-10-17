@@ -13,6 +13,6 @@ def cli(config, input, output):
         print(config, input, output)
         pass
     except Exception as e:
-        click.echo(f"❌ Ошибка: {e}")
+        click.echo(f"Error: {e}")
         raise
     
