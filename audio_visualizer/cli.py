@@ -44,9 +44,7 @@ def cli():
         if args.debug:
             config['debug'] = True
         
-        print("=" * 60)
         print("AUDIO VISUALIZER PIPELINE")
-        print("=" * 60)
         print(f"Audio file: {args.audio_file}")
         print(f"Output file: {args.output}")
         print(f"Resolution: {config['video']['width']}x{config['video']['height']}")
@@ -56,8 +54,6 @@ def cli():
             pipeline_order = config['pipeline'].get('order', [])
             print(f"Layer order: {', '.join(pipeline_order)}")
         
-        print("=" * 60)
-        
         audio_proc = AudioProcessor(config)
         audio_proc.load_audio(args.audio_file)
         
@@ -66,9 +62,7 @@ def cli():
         renderer = VideoRenderer(config)
         renderer.render(audio_proc, visualizer, args.output)
         
-        print("\n" + "=" * 60)
-        print("VISUALIZATION CREATED!")
-        print("=" * 60)
+        print("Visualization finished successfully!")
         print(f"File: {args.output}")
         
         if os.path.exists(args.output):
