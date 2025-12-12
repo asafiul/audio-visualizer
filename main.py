@@ -1,4 +1,4 @@
-from audiovisualizer.cli import cli
+from audio_visualizer.cli import cli
 
 if __name__ == '__main__':
     cli()

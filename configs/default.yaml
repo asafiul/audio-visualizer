@@ -1,0 +1,74 @@
+# Audio Visualizer - default configuration
+
+video:
+  width: 1920       # Video width in pixels
+  height: 1080      # Video height in pixels
+  fps: 30           # Frames per second
+
+audio:
+  sample_rate: 44100  # Audio sample rate (Hz)
+  normalize: true     # Normalize audio volume
+  bass_boost: 1.0     # Bass boost multiplier
+
+visualization:
+  colors:
+    primary: [0, 255, 255]    # Cyan - main color
+    secondary: [255, 0, 255]  # Magenta - secondary color
+    background: [0, 0, 0]     # Black - background color
+
+pipeline:
+  order: ['background', 'particles', 'waveform', 'spectrum', 'effects']  # Layer rendering order
+  
+  background:
+    type: 'gradient'      # Background type: gradient/animated/solid
+    blend_mode: 'overwrite'  # Layer blending: overwrite/add/multiply/screen
+    opacity: 1.0          # Layer opacity (0.0-1.0)
+    color1: [10, 10, 30]  # Gradient color 1 (RGB)
+    color2: [30, 10, 50]  # Gradient color 2 (RGB)
+    direction: 'vertical' # Gradient direction: vertical/horizontal/radial
+    blur: 0               # Background blur amount (pixels)
+
+  waveform:
+    style: 'mirror'       # Waveform style: mirror/filled/simple/energy
+    blend_mode: 'add'     # Layer blending mode
+    opacity: 0.8          # Waveform opacity
+    line_width: 2         # Waveform line thickness
+    window_duration: 0.5  # Audio window for waveform (seconds)
+    smoothing: 0.7        # Waveform smoothing (0.0-1.0)
+
+  spectrum:
+    style: 'bars'         # Spectrum style: bars/circular/wave
+    blend_mode: 'add'     # Layer blending
+    opacity: 0.7          # Spectrum opacity
+    bins: 64              # Number of frequency bins
+    smoothing: 0.3        # Height smoothing (0.0-1.0)
+    bar_spacing: 2        # Space between bars (pixels)
+    use_alpha: true       # Use alpha blending for bars
+    inner_radius: 50      # Inner radius for circular style
+    rotation_speed: 0.3   # Rotation speed for circular style
+    wave_smoothing: 0.5   # Smoothing for wave style
+    wave_thickness: 2     # Line thickness for wave style
+
+  particles:
+    blend_mode: 'add'     # Layer blending
+    opacity: 0.8          # Particles opacity
+    count: 150            # Number of particles
+    use_alpha: true       # Alpha blending for particles
+    max_speed: 12.0       # Maximum particle speed
+    min_speed: 0.1        # Minimum particle speed
+    bounce_strength: 0.85 # Wall bounce strength (0.0-1.0)
+    force_multiplier: 15.0 # Audio force multiplier
+    decay_min: 0.96       # Minimum life decay per frame
+    decay_max: 0.99       # Maximum life decay per frame
+    spawn_rate: 0.1       # New particle spawn rate
+    trail_enabled: true   # Enable particle trails
+
+  effects:
+    blend_mode: 'normal'  # Layer blending
+    opacity: 1.0          # Effects opacity
+    effects: ['glow', 'vignette']  # List of effects: glow/vignette/grain/chromatic
+    glow_intensity: 0.3   # Glow effect intensity (0.0-1.0)
+    glow_size: 15         # Glow blur kernel size
+    vignette_strength: 0.3 # Vignette darkness (0.0-1.0)
+    grain_amount: 0.05    # Film grain amount (0.0-1.0)
+    chromatic_shift: 2    # Chromatic aberration shift (pixels)
