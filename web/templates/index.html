@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Visualizer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Audio Visualizer</h1>
+        
+        <div id="uploadForm">
+            <div class="section">
+                <label>Аудиофайл:</label>
+                <input type="file" id="audioFile" accept=".mp3">
+                <span id="fileName"></span>
+            </div>
+
+            <div class="section">
+                <label>Разрешение:</label>
+                <select id="resolution">
+                    <option value="1280x720">1280×720 (HD)</option>
+                    <option value="1920x1080" selected>1920×1080 (Full HD)</option>
+                    <option value="1080x1920">1080×1920 (Вертикальное)</option>
+                </select>
+            </div>
+
+            <div class="section">
+                <label>FPS:</label>
+                <select id="fps">
+                    <option value="24">24</option>
+                    <option value="30" selected>30</option>
+                    <option value="60">60</option>
+                </select>
+            </div>
+
+            <div class="section">
+                <label>Стиль спектрума:</label>
+                <select id="spectrumStyle">
+                    <option value="bars" selected>Полосы</option>
+                    <option value="circular">Круговой</option>
+                    <option value="wave">Волна</option>
+                </select>
+            </div>
+
+            <div class="section">
+                <label>Стиль волны:</label>
+                <select id="waveformStyle">
+                    <option value="mirror" selected>Зеркальный</option>
+                    <option value="filled">Заполненный</option>
+                    <option value="simple">Простой</option>
+                </select>
+            </div>
+
+            <div class="section colors">
+                <label>Цвета:</label>
+                <input type="color" id="primaryColor" value="#00FFFF" title="Основной">
+                <input type="color" id="secondaryColor" value="#FF00FF" title="Дополнительный">
+            </div>
+
+            <button id="startBtn" disabled>Начать обработку</button>
+        </div>
+
+        <div id="progressSection" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">Обработка: 0%</p>
+        </div>
+
+        <div id="resultSection" style="display: none;">
+            <p>Видео готово!</p>
+            <button id="downloadBtn">Скачать видео</button>
+            <button id="newBtn">Создать новое</button>
+        </div>
+
+        <div id="errorSection" style="display: none;">
+            <p id="errorText" class="error"></p>
+            <button id="retryBtn">Попробовать снова</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
