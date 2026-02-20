@@ -28,6 +28,44 @@ pipeline:
     direction: 'vertical' # Gradient direction: vertical/horizontal/radial
     blur: 0               # Background blur amount (pixels)
 
+  circular_waveform:
+    style: 'mirror'       # Circular waveform style: mirror/filled/bars
+    blend_mode: 'add'     # Layer blending mode
+    opacity: 0.8          # Waveform opacity
+    line_width: 2         # Waveform line thickness
+    window_duration: 0.5  # Audio window for waveform (seconds)
+    smoothing: 0.7        # Waveform smoothing (0.0-1.0)
+    radius: 300           # Circle radius
+    center_x: 960         # Circle center X coordinate
+    center_y: 540         # Circle center Y coordinate
+    rotation_speed: 0.2   # Rotation speed
+
+  circular_spectrum:
+    style: 'bars'         # Circular spectrum style: bars/wave
+    blend_mode: 'add'     # Layer blending
+    opacity: 0.7          # Spectrum opacity
+    bins: 64              # Number of frequency bins
+    smoothing: 0.3        # Height smoothing (0.0-1.0)
+    bar_spacing: 2        # Space between bars (pixels)
+    use_alpha: true       # Use alpha blending for bars
+    inner_radius: 200     # Inner radius for circular spectrum
+    outer_radius: 400     # Outer radius for circular spectrum
+    rotation_speed: 0.3   # Rotation speed for circular spectrum
+
+  circular_particles:
+    blend_mode: 'add'     # Layer blending
+    opacity: 0.8          # Particles opacity
+    count: 100            # Number of particles
+    use_alpha: true       # Alpha blending for particles
+    max_speed: 8.0        # Maximum particle speed
+    min_speed: 0.1        # Minimum particle speed
+    orbit_radius_min: 100 # Minimum orbit radius
+    orbit_radius_max: 400 # Maximum orbit radius
+    force_multiplier: 20.0 # Audio force multiplier
+    decay_min: 0.96       # Minimum life decay per frame
+    decay_max: 0.99       # Maximum life decay per frame
+    spawn_rate: 0.05      # New particle spawn rate
+
   waveform:
     style: 'mirror'       # Waveform style: mirror/filled/simple/energy
     blend_mode: 'add'     # Layer blending mode

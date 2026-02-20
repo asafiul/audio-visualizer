@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('height', res[1]);
 
         formData.append('fps', document.getElementById('fps').value);
+        formData.append('visualizer_type', document.getElementById('visualizerType').value);
         formData.append('spectrum_style', document.getElementById('spectrumStyle').value);
         formData.append('waveform_style', document.getElementById('waveformStyle').value);
         formData.append('primary_color', document.getElementById('primaryColor').value);

@@ -29,7 +29,7 @@ def parse_color(hex_color):
     return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
 
 
-def process_video(job_id, audio_path, output_path, config):
+def process_video(job_id, audio_path, output_path, config, visualizer_type='pipeline'):
     try:
         jobs[job_id]['status'] = 'processing'
         jobs[job_id]['progress'] = 5
@@ -41,7 +41,7 @@ def process_video(job_id, audio_path, output_path, config):
         jobs[job_id]['progress'] = 15
         jobs[job_id]['message'] = 'Создание визуализации...'
 
-        visualizer = VisualizerFactory.create('pipeline', config, audio_proc)
+        visualizer = VisualizerFactory.create(visualizer_type, config, audio_proc)
 
         jobs[job_id]['progress'] = 20
         jobs[job_id]['message'] = 'Рендеринг видео...'
@@ -138,8 +138,17 @@ def upload():
     if request.form.get('secondary_color'):
         config['visualization']['colors']['secondary'] = parse_color(request.form['secondary_color'])
 
-    config['pipeline']['spectrum']['style'] = request.form.get('spectrum_style', 'bars')
-    config['pipeline']['waveform']['style'] = request.form.get('waveform_style', 'mirror')
+    visualizer_type = request.form.get('visualizer_type', 'pipeline')
+    
+    if visualizer_type == 'pipeline':
+        config['pipeline']['order'] = ['background', 'particles', 'waveform', 'spectrum', 'effects']
+    else:
+        config['pipeline']['order'] = ['background', visualizer_type]
+    
+    if 'spectrum' in config['pipeline']['order']:
+        config['pipeline']['spectrum']['style'] = request.form.get('spectrum_style', 'bars')
+    if 'waveform' in config['pipeline']['order']:
+        config['pipeline']['waveform']['style'] = request.form.get('waveform_style', 'mirror')
 
     output_path = app.config['OUTPUT_FOLDER'] / f"{job_id}_output.mp4"
 
@@ -151,7 +160,7 @@ def upload():
         'output_path': str(output_path)
     }
 
-    thread = threading.Thread(target=process_video, args=(job_id, audio_path, output_path, config))
+    thread = threading.Thread(target=process_video, args=(job_id, audio_path, output_path, config, 'pipeline'))
     thread.daemon = True
     thread.start()
 

@@ -13,12 +13,18 @@ class LayerRegistry:
         from .layers.spectrum_layer import SpectrumLayer
         from .layers.waveform_layer import WaveformLayer
         from .layers.effects_layer import EffectsLayer
+        from .layers.circular_waveform_layer import CircularWaveformLayer
+        from .layers.circular_spectrum_layer import CircularSpectrumLayer
+        from .layers.circular_particles_layer import CircularParticlesLayer
         
         self.register('background', BackgroundLayer)
         self.register('particles', ParticlesLayer)
         self.register('spectrum', SpectrumLayer)
         self.register('waveform', WaveformLayer)
         self.register('effects', EffectsLayer)
+        self.register('circular_waveform', CircularWaveformLayer)
+        self.register('circular_spectrum', CircularSpectrumLayer)
+        self.register('circular_particles', CircularParticlesLayer)
     
     def register(self, name: str, layer_class: Type[BaseLayer]):
         if not issubclass(layer_class, BaseLayer):
