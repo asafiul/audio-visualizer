@@ -22,11 +22,6 @@
                     Audio Visualizer
                 </a>
             </h1>
-            <div class="header-actions">
-                <button class="btn btn-primary" id="renderBtn" disabled>
-                    Render
-                </button>
-            </div>
         </header>
 
         <!-- Main Panel -->
@@ -37,7 +32,7 @@
                     <span class="section-label">Audio File</span>
                 </div>
                 <div class="upload-area upload-area-compact" id="uploadArea">
-                    <input type="file" id="audioFile" accept=".mp3,.wav,.ogg,.flac">
+                    <input type="file" id="audioFile" accept="audio/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.opus">
                     <div class="upload-row">
                         <span class="upload-icon-sm">♫</span>
                         <span class="upload-text">Drop audio or click to browse</span>
@@ -149,6 +144,13 @@
                     <!-- Params rendered dynamically -->
                 </div>
             </div>
+
+            <!-- Sticky Render Bar -->
+            <div class="render-bar">
+                <button class="btn btn-primary render-bar-btn" id="renderBtn" disabled>
+                    ▶ Render Video
+                </button>
+            </div>
         </main>
 
         <!-- Sidebar: History -->
@@ -168,6 +170,9 @@
                 <div class="progress-fill" id="progressFill"></div>
             </div>
             <div class="progress-text" id="progressText">0%</div>
+            <div class="progress-cancel" id="progressCancel">
+                <button class="btn btn-ghost" id="cancelRenderBtn">✕ Cancel</button>
+            </div>
             <div class="progress-actions" id="progressActions" style="display:none;">
                 <button class="btn btn-primary" id="previewResultBtn">▶ Preview</button>
                 <button class="btn" id="downloadResultBtn">↓ Download</button>

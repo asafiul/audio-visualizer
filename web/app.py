@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 import json
+import time as _time
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
@@ -24,6 +25,11 @@ app.config['UPLOAD_FOLDER'].mkdir(exist_ok=True)
 app.config['OUTPUT_FOLDER'].mkdir(exist_ok=True)
 
 jobs = {}
+
+
+class CancelledError(Exception):
+    """Raised when a render job is cancelled by the user."""
+    pass
 
 # Known enum values for layer parameters — parsed from default.yaml comments and code
 # This map is auto-enriched from the config; string values become enums if we know options
@@ -174,32 +180,45 @@ def parse_color(hex_color):
     return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
 
 
+def _update_job(job_id, **kwargs):
+    """Update job fields and refresh last_update timestamp."""
+    job = jobs[job_id]
+    for k, v in kwargs.items():
+        job[k] = v
+    job['last_update'] = _time.time()
+
+
 def process_video(job_id, audio_path, output_path, config, visualizer_type='pipeline'):
     try:
-        jobs[job_id]['status'] = 'processing'
-        jobs[job_id]['progress'] = 5
-        jobs[job_id]['message'] = 'Loading audio...'
+        _update_job(job_id, status='processing', progress=5, message='Loading audio...')
 
         audio_proc = AudioProcessor(config)
         audio_proc.load_audio(str(audio_path))
 
-        jobs[job_id]['progress'] = 15
-        jobs[job_id]['message'] = 'Creating visualization...'
+        _update_job(job_id, progress=15, message='Creating visualization...')
 
         visualizer = VisualizerFactory.create(visualizer_type, config, audio_proc)
 
-        jobs[job_id]['progress'] = 20
-        jobs[job_id]['message'] = 'Rendering video...'
+        _update_job(job_id, progress=20, message='Rendering video...')
 
         render_with_progress(job_id, config, audio_proc, visualizer, str(output_path))
 
-        jobs[job_id]['status'] = 'completed'
-        jobs[job_id]['progress'] = 100
-        jobs[job_id]['message'] = 'Done!'
+        _update_job(job_id, status='completed', progress=100, message='Done!')
+
+    except CancelledError:
+        _update_job(job_id, status='cancelled', message='Cancelled by user')
+        # Clean up partial output
+        if os.path.exists(str(output_path)):
+            os.unlink(str(output_path))
 
     except Exception as e:
-        jobs[job_id]['status'] = 'error'
-        jobs[job_id]['message'] = str(e)
+        # Provide user-friendly error messages
+        err_msg = str(e)
+        if 'NoBackendError' in type(e).__name__ or 'NoBackendError' in err_msg:
+            err_msg = 'Failed to load audio file. The file may be corrupted or not a valid audio format.'
+        elif 'Format not recognised' in err_msg or 'LibsndfileError' in type(e).__name__:
+            err_msg = 'Unsupported audio format. Please use MP3, WAV, OGG, or FLAC.'
+        _update_job(job_id, status='error', message=err_msg)
         import traceback
         traceback.print_exc()
 
@@ -225,19 +244,26 @@ def render_with_progress(job_id, config, audio_proc, visualizer, output_path):
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         writer = cv2.VideoWriter(temp_path, fourcc, fps, (width, height))
 
+        cancelled = False
         for i in range(total_frames):
+            # Check cancel flag each frame
+            if jobs[job_id].get('cancel'):
+                cancelled = True
+                break
+
             time_point = i * frame_duration
             frame = visualizer.render_frame(time_point)
             writer.write(frame)
 
             progress = 20 + int((i / total_frames) * 70)
-            jobs[job_id]['progress'] = progress
-            jobs[job_id]['message'] = f'Frame {i+1}/{total_frames}'
+            _update_job(job_id, progress=progress, message=f'Frame {i+1}/{total_frames}')
 
         writer.release()
 
-        jobs[job_id]['progress'] = 95
-        jobs[job_id]['message'] = 'Adding audio...'
+        if cancelled:
+            raise CancelledError()
+
+        _update_job(job_id, progress=95, message='Adding audio...')
 
         cmd = [
             'ffmpeg', '-y',
@@ -271,13 +297,27 @@ def api_layers():
 def upload():
     # Support reusing audio from a previous job
     reuse_job_id = request.form.get('reuse_audio_job_id')
-    if reuse_job_id and reuse_job_id in jobs:
-        prev_job = jobs[reuse_job_id]
-        src_audio = prev_job.get('original_audio_path') or prev_job.get('audio_path')
+    if reuse_job_id:
+        src_audio = None
+        original_filename = 'audio.mp3'
+
+        # Try in-memory jobs dict first
+        if reuse_job_id in jobs:
+            prev_job = jobs[reuse_job_id]
+            src_audio = prev_job.get('original_audio_path') or prev_job.get('audio_path')
+            original_filename = prev_job.get('original_filename') or prev_job.get('filename', 'audio.mp3')
+
+        # Fallback: search on disk (survives server restart)
         if not src_audio or not os.path.exists(src_audio):
-            return jsonify({'error': 'Previous audio file not found'}), 400
+            src_audio = _find_audio_on_disk(reuse_job_id)
+            if src_audio:
+                original_filename = os.path.basename(src_audio)
+
+        if not src_audio or not os.path.exists(src_audio):
+            return jsonify({'error': 'Previous audio file not found. Please re-upload the audio.'}), 400
+
         job_id = str(uuid.uuid4())[:8]
-        filename = prev_job.get('filename', 'audio.mp3')
+        filename = secure_filename(original_filename)
         # Copy audio to new job path
         import shutil
         audio_path = app.config['UPLOAD_FOLDER'] / f"{job_id}_{filename}"
@@ -290,8 +330,15 @@ def upload():
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
 
+        # Validate audio file extension
+        ALLOWED_AUDIO_EXT = {'.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.opus'}
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in ALLOWED_AUDIO_EXT:
+            return jsonify({'error': f'Unsupported file format "{ext}". Please upload an audio file (mp3, wav, ogg, flac, aac, m4a).'}), 400
+
         job_id = str(uuid.uuid4())[:8]
 
+        original_filename = file.filename  # Keep the user's original filename
         filename = secure_filename(file.filename)
         audio_path = app.config['UPLOAD_FOLDER'] / f"{job_id}_{filename}"
         file.save(str(audio_path))
@@ -382,6 +429,7 @@ def upload():
         'original_audio_path': str(app.config['UPLOAD_FOLDER'] / f"{job_id}_{filename}"),
         'output_path': str(output_path),
         'filename': filename,
+        'original_filename': original_filename,  # Clean name without job ID prefix
         'config_snapshot': {
             'video': config['video'],
             'order': config['pipeline']['order'],
@@ -396,11 +444,22 @@ def upload():
     return jsonify({'job_id': job_id})
 
 
+STALL_TIMEOUT = 15  # seconds without progress update → consider stalled
+
+
 @app.route('/status/<job_id>')
 def status(job_id):
     if job_id not in jobs:
         return jsonify({'error': 'Job not found'}), 404
     job = jobs[job_id]
+
+    # Detect stalled processing (no update for STALL_TIMEOUT seconds)
+    if job['status'] == 'processing':
+        last = job.get('last_update', 0)
+        if last and (_time.time() - last) > STALL_TIMEOUT:
+            job['status'] = 'error'
+            job['message'] = 'Render appears to have stalled (no progress for 60s)'
+
     return jsonify({
         'status': job['status'],
         'progress': job['progress'],
@@ -408,6 +467,18 @@ def status(job_id):
         'filename': job.get('filename', ''),
         'config_snapshot': job.get('config_snapshot', {}),
     })
+
+
+@app.route('/cancel/<job_id>', methods=['POST'])
+def cancel(job_id):
+    """Set cancel flag on a running job."""
+    if job_id not in jobs:
+        return jsonify({'error': 'Job not found'}), 404
+    job = jobs[job_id]
+    if job['status'] != 'processing':
+        return jsonify({'error': 'Job is not running'}), 400
+    job['cancel'] = True
+    return jsonify({'ok': True})
 
 
 @app.route('/download/<job_id>')
@@ -444,14 +515,32 @@ def preview(job_id):
     )
 
 
+def _find_audio_on_disk(job_id):
+    """Search uploads folder for audio files matching a job ID prefix (survives server restart)."""
+    upload_dir = app.config['UPLOAD_FOLDER']
+    # Look for files starting with the job_id prefix
+    for f in sorted(upload_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+        if f.name.startswith(job_id + '_') and f.is_file():
+            ext = f.suffix.lower()
+            if ext in {'.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.opus'}:
+                return str(f)
+    return None
+
+
 @app.route('/audio/<job_id>')
 def serve_audio(job_id):
     """Serve the uploaded audio file for a given job (used by restore)."""
-    if job_id not in jobs:
-        return jsonify({'error': 'Job not found'}), 404
+    audio_path = None
 
-    job = jobs[job_id]
-    audio_path = job.get('original_audio_path') or job.get('audio_path')
+    # Try in-memory jobs dict first
+    if job_id in jobs:
+        job = jobs[job_id]
+        audio_path = job.get('original_audio_path') or job.get('audio_path')
+
+    # Fallback: search on disk (survives server restart)
+    if not audio_path or not os.path.exists(audio_path):
+        audio_path = _find_audio_on_disk(job_id)
+
     if not audio_path or not os.path.exists(audio_path):
         return jsonify({'error': 'Audio file not found'}), 404
 

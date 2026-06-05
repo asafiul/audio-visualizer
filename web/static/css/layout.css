@@ -3,9 +3,10 @@
     display: grid;
     grid-template-columns: 1fr 340px;
     grid-template-rows: auto 1fr;
-    min-height: 100vh;
+    height: 100vh;
     max-width: 1280px;
     margin: 0 auto;
+    overflow: hidden;
 }
 
 .app-header {
@@ -45,18 +46,48 @@
 
 /* ── Main Panel ── */
 .main-panel {
-    padding: 24px;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
     max-height: calc(100vh - 57px);
+    padding: 0;
+}
+
+.main-panel > .section,
+.main-panel > .params-panel {
+    padding: 0 24px;
+}
+
+.main-panel > .section:first-child {
+    padding-top: 24px;
+}
+
+/* ── Sticky Render Bar ── */
+.render-bar {
+    position: sticky;
+    bottom: 0;
+    padding: 12px 24px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+    z-index: 10;
+}
+
+.render-bar-btn {
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 /* ── Sidebar ── */
 .sidebar {
     border-left: 1px solid var(--border);
-    padding: 20px;
-    overflow-y: auto;
-    max-height: calc(100vh - 57px);
     background: var(--surface);
+    max-height: calc(100vh - 57px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .sidebar-title {
@@ -65,7 +96,19 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-muted);
-    margin-bottom: 12px;
+    padding: 20px 20px 12px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.history-list {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 /* ── Section ── */
@@ -168,11 +211,6 @@
 }
 
 /* ── History Panel ── */
-.history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
 
 .history-item {
     padding: 10px 12px;
@@ -181,7 +219,6 @@
     border-radius: var(--radius);
     cursor: pointer;
     transition: all var(--transition);
-    overflow: hidden;
 }
 
 .history-item:hover {
@@ -219,12 +256,9 @@
 }
 
 .history-item-actions {
-    opacity: 0;
-    transition: opacity var(--transition);
-}
-
-.history-item:hover .history-item-actions {
-    opacity: 1;
+    margin-top: 6px;
+    display: flex;
+    gap: 4px;
 }
 
 /* ── Responsive ── */

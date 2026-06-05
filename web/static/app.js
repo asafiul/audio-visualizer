@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressText  = $('progressText');
     const progressTitle = $('progressTitle');
     const progressActions = $('progressActions');
+    const progressCancel = $('progressCancel');
+    const cancelRenderBtn = $('cancelRenderBtn');
     const progressError = $('progressError');
     const previewResultBtn  = $('previewResultBtn');
     const downloadResultBtn = $('downloadResultBtn');
@@ -166,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         progressFill.style.width = '0%';
         progressText.textContent = '0%';
         progressActions.style.display = 'none';
+        progressCancel.style.display = '';
         progressError.style.display = 'none';
     }
 
@@ -173,13 +176,29 @@ document.addEventListener('DOMContentLoaded', () => {
         progressTitle.textContent = 'Error';
         progressError.textContent = msg;
         progressError.style.display = 'block';
+        progressCancel.style.display = 'none';
         progressActions.style.display = 'flex';
         previewResultBtn.style.display = 'none';
         downloadResultBtn.style.display = 'none';
         closeResultBtn.textContent = 'Close';
     }
 
+    cancelRenderBtn.addEventListener('click', async () => {
+        if (!currentJobId) return;
+        cancelRenderBtn.disabled = true;
+        cancelRenderBtn.textContent = 'Cancelling...';
+        try {
+            await fetch('/cancel/' + currentJobId, { method: 'POST' });
+        } catch (e) {
+            // ignore — poll will pick up the status
+        }
+    });
+
     function pollProgress() {
+        let lastProgress = -1;
+        let lastProgressTime = Date.now();
+        const STALL_MS = 10000; // 10 seconds without progress change → stalled
+
         const interval = setInterval(async () => {
             try {
                 const resp = await fetch('/status/' + currentJobId);
@@ -187,14 +206,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 progressFill.style.width = data.progress + '%';
                 progressText.textContent = data.message || (data.progress + '%');
 
+                // Track stall: if progress hasn't changed for STALL_MS, show error
+                if (data.status === 'processing') {
+                    if (data.progress !== lastProgress) {
+                        lastProgress = data.progress;
+                        lastProgressTime = Date.now();
+                    } else if (Date.now() - lastProgressTime > STALL_MS) {
+                        clearInterval(interval);
+                        showProgressError('Render appears stalled — no progress for 30s');
+                        return;
+                    }
+                }
+
                 if (data.status === 'completed') {
                     clearInterval(interval);
                     progressTitle.textContent = 'Done!';
+                    progressText.textContent = 'Video is ready';
+                    progressFill.style.width = '100%';
+                    progressCancel.style.display = 'none';
                     progressActions.style.display = 'flex';
                     previewResultBtn.style.display = '';
                     downloadResultBtn.style.display = '';
                     closeResultBtn.textContent = 'Close';
                     saveToHistory();
+                } else if (data.status === 'cancelled') {
+                    clearInterval(interval);
+                    // Close overlay, keep all parameters intact, don't save to history
+                    progressOverlay.classList.remove('visible');
+                    // Reset cancel button for next use
+                    cancelRenderBtn.disabled = false;
+                    cancelRenderBtn.textContent = '✕ Cancel';
+                    currentJobId = null;
                 } else if (data.status === 'error') {
                     clearInterval(interval);
                     showProgressError(data.message);
@@ -215,6 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     closeResultBtn.addEventListener('click', () => {
         progressOverlay.classList.remove('visible');
+        // Reset cancel button for next render
+        cancelRenderBtn.disabled = false;
+        cancelRenderBtn.textContent = '✕ Cancel';
         currentJobId = null;
     });
 

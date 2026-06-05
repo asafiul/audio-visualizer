@@ -63,3 +63,4 @@ logs/
 .cache
 
 gant
+web/uploads

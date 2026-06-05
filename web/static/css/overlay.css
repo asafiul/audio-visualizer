@@ -52,6 +52,10 @@
     font-family: var(--mono);
 }
 
+.progress-cancel {
+    margin-top: 16px;
+}
+
 .progress-actions {
     margin-top: 20px;
     display: flex;
