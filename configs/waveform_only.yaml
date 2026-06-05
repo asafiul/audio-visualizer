@@ -1,0 +1,35 @@
+# Audio Visualizer - waveform only configuration
+
+video:
+  width: 1920       # Video width in pixels
+  height: 1080      # Video height in pixels
+  fps: 30           # Frames per second
+
+audio:
+  sample_rate: 44100  # Audio sample rate (Hz)
+  normalize: true     # Normalize audio volume
+  bass_boost: 1.0     # Bass boost multiplier
+
+visualization:
+  colors:
+    primary: [0, 255, 255]    # Cyan - main color
+    secondary: [255, 0, 255]  # Magenta - secondary color
+    background: [0, 0, 0]     # Black - background color
+
+pipeline:
+  order: ['background', 'waveform']  # Only background and waveform layers
+  
+  background:
+    type: 'solid'        # Simple solid background
+    blend_mode: 'overwrite'  # Layer blending: overwrite/add/multiply/screen
+    opacity: 1.0          # Layer opacity (0.0-1.0)
+    color: [10, 10, 30]   # Background color (RGB)
+
+  waveform:
+    style: 'mirror'       # Waveform style: mirror/filled/simple/energy
+    blend_mode: 'add'     # Layer blending mode
+    opacity: 0.8          # Waveform opacity
+    line_width: 2         # Waveform line thickness
+    window_duration: 0.5  # Audio window for waveform (seconds)
+    smoothing: 0.7        # Waveform smoothing (0.0-1.0)
+    

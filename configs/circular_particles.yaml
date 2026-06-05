@@ -1,0 +1,38 @@
+video:
+  width: 1920
+  height: 1080
+  fps: 30
+
+audio:
+  sample_rate: 44100
+  normalize: true
+  bass_boost: 1.0
+
+visualization:
+  colors:
+    primary: [255, 0, 255]    # Magenta
+    secondary: [0, 255, 255]  # Cyan
+    background: [10, 5, 20]   # Dark purple
+
+pipeline:
+  order: ['background', 'circular_particles']
+  
+  background:
+    type: 'solid'
+    blend_mode: 'overwrite'
+    opacity: 1.0
+    color: [10, 5, 20]
+
+  circular_particles:
+    blend_mode: 'add'
+    opacity: 0.8
+    count: 100
+    use_alpha: true
+    max_speed: 8.0
+    min_speed: 0.1
+    orbit_radius_min: 100
+    orbit_radius_max: 400
+    force_multiplier: 20.0
+    decay_min: 0.98
+    decay_max: 0.995
+    spawn_rate: 5.0

@@ -1,0 +1,33 @@
+video:
+  width: 1920
+  height: 1080
+  fps: 30
+
+audio:
+  sample_rate: 44100
+  normalize: true
+  bass_boost: 1.0
+
+visualization:
+  colors:
+    primary: [0, 255, 255]    # Cyan
+    secondary: [255, 0, 255]  # Magenta
+    background: [0, 0, 0]     # Black
+
+pipeline:
+  order: ['background', 'particles', 'circular_waveform']
+  
+  background:
+    type: 'solid'
+    blend_mode: 'overwrite'
+    opacity: 1.0
+    color: [10, 10, 30]
+
+  circular_waveform:
+    style: 'mirror'           # mirror/filled/bars
+    blend_mode: 'add'
+    opacity: 0.8
+    line_width: 2
+    window_duration: 0.5
+    smoothing: 0.7
+    points: 360

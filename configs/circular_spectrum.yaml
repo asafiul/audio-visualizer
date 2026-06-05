@@ -1,0 +1,30 @@
+video:
+  width: 1920
+  height: 1080
+  fps: 30
+
+audio:
+  sample_rate: 44100
+  normalize: true
+  bass_boost: 1.0
+
+visualization:
+  colors:
+    primary: [255, 100, 0]    # Orange
+    secondary: [255, 200, 0]  # Yellow
+    background: [0, 0, 20]    # Dark blue
+
+pipeline:
+  order: ['background', 'circular_spectrum']
+  
+  background:
+    type: 'solid'
+    blend_mode: 'overwrite'
+    opacity: 1.0
+    color: [0, 0, 20]
+
+  circular_spectrum:
+    blend_mode: 'add'
+    opacity: 0.9
+    bins: 32
+    bar_width: 3

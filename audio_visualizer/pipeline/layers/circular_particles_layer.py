@@ -77,10 +77,10 @@ class CircularParticlesLayer(BaseLayer):
         else:
             audio_level = 0
         
-        spawn_rate = self.layer_config.get("spawn_rate", 5)
+        spawn_rate = self.layer_config.get("spawn_rate", 5.0)
         if time - self.last_spawn_time > 1.0 / spawn_rate:
             for _ in range(np.random.randint(1, 4)):
-                self.particles.append(CircularParticle(self.width, self.height, 
+                self.particles.append(CircularParticle(self.width, self.height,
                                                      self.config, time))
             self.last_spawn_time = time
         

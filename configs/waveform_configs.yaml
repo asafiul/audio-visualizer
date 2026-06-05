@@ -1,0 +1,75 @@
+# Audio Visualizer - waveform configurations
+
+# Configuration 1: Simple waveform
+waveform_simple:
+  video:
+    width: 1920
+    height: 1080
+    fps: 30
+  audio:
+    sample_rate: 44100
+    normalize: true
+    bass_boost: 1.0
+  visualization:
+    colors:
+      primary: [0, 255, 255]
+      background: [0, 0, 0]
+  pipeline:
+    order: ['background', 'waveform']
+    background:
+      type: 'solid'
+      color: [0, 0, 0]
+    waveform:
+      style: 'simple'
+      opacity: 0.9
+      line_width: 3
+
+# Configuration 2: Mirror waveform with gradient
+waveform_mirror:
+  video:
+    width: 1920
+    height: 1080
+    fps: 30
+  audio:
+    sample_rate: 44100
+    normalize: true
+    bass_boost: 1.2
+  visualization:
+    colors:
+      primary: [255, 100, 0]
+      background: [10, 10, 30]
+  pipeline:
+    order: ['background', 'waveform']
+    background:
+      type: 'gradient'
+      color1: [10, 10, 30]
+      color2: [30, 10, 50]
+      direction: 'vertical'
+    waveform:
+      style: 'mirror'
+      opacity: 0.8
+      line_width: 2
+
+# Configuration 3: Energy waveform with solid background
+waveform_energy:
+  video:
+    width: 1920
+    height: 1080
+    fps: 30
+  audio:
+    sample_rate: 44100
+    normalize: true
+    bass_boost: 1.5
+  visualization:
+    colors:
+      primary: [255, 0, 255]
+      background: [20, 0, 20]
+  pipeline:
+    order: ['background', 'waveform']
+    background:
+      type: 'solid'
+      color: [20, 0, 20]
+    waveform:
+      style: 'energy'
+      opacity: 0.7
+      line_width: 4

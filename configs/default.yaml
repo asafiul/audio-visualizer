@@ -62,9 +62,9 @@ pipeline:
     orbit_radius_min: 100 # Minimum orbit radius
     orbit_radius_max: 400 # Maximum orbit radius
     force_multiplier: 20.0 # Audio force multiplier
-    decay_min: 0.96       # Minimum life decay per frame
-    decay_max: 0.99       # Maximum life decay per frame
-    spawn_rate: 0.05      # New particle spawn rate
+    decay_min: 0.98       # Minimum life decay per frame
+    decay_max: 0.995      # Maximum life decay per frame
+    spawn_rate: 5.0       # New particle spawn rate
 
   waveform:
     style: 'mirror'       # Waveform style: mirror/filled/simple/energy
