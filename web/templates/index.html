@@ -1,99 +1,202 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audio Visualizer</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/player.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/overlay.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Audio Visualizer</h1>
-        
-        <div id="uploadForm">
+    <div class="app">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>
+                <a href="#" id="headerHome" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">
+                    <span class="icon">▶</span>
+                    Audio Visualizer
+                </a>
+            </h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="renderBtn" disabled>
+                    Render
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Panel -->
+        <main class="main-panel" id="mainPanel">
+            <!-- Upload -->
             <div class="section">
-                <label>Аудиофайл:</label>
-                <input type="file" id="audioFile" accept=".mp3">
-                <span id="fileName"></span>
+                <div class="section-header">
+                    <span class="section-label">Audio File</span>
+                </div>
+                <div class="upload-area upload-area-compact" id="uploadArea">
+                    <input type="file" id="audioFile" accept=".mp3,.wav,.ogg,.flac">
+                    <div class="upload-row">
+                        <span class="upload-icon-sm">♫</span>
+                        <span class="upload-text">Drop audio or click to browse</span>
+                        <span class="upload-filename" id="fileName"></span>
+                    </div>
+                </div>
             </div>
 
+            <!-- Custom Audio Player & Trim -->
+            <div class="section" id="audioTrimSection">
+                <div class="section-header">
+                    <span class="section-label">Audio & Trim</span>
+                </div>
+                <audio id="audioPlayer" style="display:none;"></audio>
+                <div class="custom-player">
+                    <div class="player-btns">
+                        <button class="player-btn" id="playPauseBtn" title="Play / Pause">
+                            <span id="playIcon">▶</span>
+                        </button>
+                        <button class="player-btn player-btn-sel" id="trimPlayBtn" title="Play trimmed selection only">
+                            ↻
+                        </button>
+                    </div>
+                    <div class="player-time" id="playerTime">0:00</div>
+                    <div class="player-track" id="playerTrack">
+                        <div class="player-track-bg"></div>
+                        <div class="player-trim-region" id="playerTrimRegion"></div>
+                        <div class="player-progress" id="playerProgress"></div>
+                        <div class="player-cursor" id="playerCursor"></div>
+                        <div class="player-handle player-handle-start" id="handleStart" title="Trim start"></div>
+                        <div class="player-handle player-handle-end" id="handleEnd" title="Trim end"></div>
+                    </div>
+                    <div class="player-time" id="playerDuration">0:00</div>
+                </div>
+                <div class="trim-row">
+                    <div class="trim-inputs">
+                        <div class="number-input number-input-sm">
+                            <button type="button" id="trimStartDec">−</button>
+                            <input type="number" id="trimStart" value="0" min="0" step="0.1">
+                            <button type="button" id="trimStartInc">+</button>
+                        </div>
+                        <span class="trim-sep">–</span>
+                        <div class="number-input number-input-sm">
+                            <button type="button" id="trimEndDec">−</button>
+                            <input type="number" id="trimEnd" value="0" min="0" step="0.1">
+                            <button type="button" id="trimEndInc">+</button>
+                        </div>
+                    </div>
+                    <span class="trim-info-text" id="trimInfo">Upload audio to trim</span>
+                </div>
+            </div>
+
+            <!-- Video Settings -->
             <div class="section">
-                <label>Разрешение:</label>
-                <select id="resolution">
-                    <option value="1280x720">1280×720 (HD)</option>
-                    <option value="1920x1080" selected>1920×1080 (Full HD)</option>
-                    <option value="1080x1920">1080×1920 (Вертикальное)</option>
-                </select>
+                <div class="section-header">
+                    <span class="section-label">Video Settings</span>
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <label>Resolution</label>
+                        <select id="resolution">
+                            <option value="1280x720">1280×720</option>
+                            <option value="1920x1080" selected>1920×1080</option>
+                            <option value="1080x1920">1080×1920</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>FPS</label>
+                        <select id="fps">
+                            <option value="24">24</option>
+                            <option value="30" selected>30</option>
+                            <option value="60">60</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Hidden color inputs for backward compat -->
+                <input type="hidden" id="primaryColor" value="#6366f1">
+                <input type="hidden" id="secondaryColor" value="#ec4899">
             </div>
 
+            <!-- Pipeline Builder -->
             <div class="section">
-                <label>FPS:</label>
-                <select id="fps">
-                    <option value="24">24</option>
-                    <option value="30" selected>30</option>
-                    <option value="60">60</option>
-                </select>
+                <div class="section-header">
+                    <span class="section-label">Visualization Pipeline</span>
+                    <span style="font-size:11px; color: var(--text-muted);" id="layerCount">0 layers</span>
+                </div>
+
+                <div class="pipeline-list" id="pipelineList">
+                    <!-- Layers rendered dynamically -->
+                </div>
+
+                <div class="add-layer-wrapper">
+                    <button class="btn btn-sm" id="addLayerBtn" style="width:100%;">
+                        + Add Layer
+                    </button>
+                    <div class="add-layer-menu" id="addLayerMenu">
+                        <!-- Options rendered dynamically -->
+                    </div>
+                </div>
             </div>
 
-            <div class="section">
-                <label>Тип визуализатора:</label>
-                <select id="visualizerType">
-                    <option value="pipeline" selected>Полный пайплайн</option>
-                    <option value="waveform">Только волна</option>
-                    <option value="spectrum">Только спектрум</option>
-                    <option value="particles">Только частицы</option>
-                    <option value="circular_waveform">Круговая волна</option>
-                    <option value="circular_spectrum">Круговой спектрум</option>
-                    <option value="circular_particles">Круговые частицы</option>
-                </select>
+            <!-- Layer Parameters -->
+            <div class="params-panel" id="paramsPanel" style="display:none;">
+                <div class="params-panel-header">
+                    <span class="params-panel-title" id="paramsPanelTitle">Layer Settings</span>
+                    <button class="btn btn-sm btn-ghost" id="closeParamsBtn">✕</button>
+                </div>
+                <div id="paramsContent">
+                    <!-- Params rendered dynamically -->
+                </div>
             </div>
+        </main>
 
-            <div class="section">
-                <label>Стиль спектрума:</label>
-                <select id="spectrumStyle">
-                    <option value="bars" selected>Полосы</option>
-                    <option value="circular">Круговой</option>
-                    <option value="wave">Волна</option>
-                </select>
+        <!-- Sidebar: History -->
+        <aside class="sidebar">
+            <div class="sidebar-title">History</div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty" id="historyEmpty">No previous runs</div>
             </div>
+        </aside>
+    </div>
 
-            <div class="section">
-                <label>Стиль волны:</label>
-                <select id="waveformStyle">
-                    <option value="mirror" selected>Зеркальный</option>
-                    <option value="filled">Заполненный</option>
-                    <option value="simple">Простой</option>
-                </select>
-            </div>
-
-            <div class="section colors">
-                <label>Цвета:</label>
-                <input type="color" id="primaryColor" value="#00FFFF" title="Основной">
-                <input type="color" id="secondaryColor" value="#FF00FF" title="Дополнительный">
-            </div>
-
-            <button id="startBtn" disabled>Начать обработку</button>
-        </div>
-
-        <div id="progressSection" style="display: none;">
+    <!-- Progress Overlay -->
+    <div class="progress-overlay" id="progressOverlay">
+        <div class="progress-card">
+            <h3 id="progressTitle">Rendering...</h3>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <p id="progressText">Обработка: 0%</p>
-        </div>
-
-        <div id="resultSection" style="display: none;">
-            <p>Видео готово!</p>
-            <button id="downloadBtn">Скачать видео</button>
-            <button id="newBtn">Создать новое</button>
-        </div>
-
-        <div id="errorSection" style="display: none;">
-            <p id="errorText" class="error"></p>
-            <button id="retryBtn">Попробовать снова</button>
+            <div class="progress-text" id="progressText">0%</div>
+            <div class="progress-actions" id="progressActions" style="display:none;">
+                <button class="btn btn-primary" id="previewResultBtn">▶ Preview</button>
+                <button class="btn" id="downloadResultBtn">↓ Download</button>
+                <button class="btn btn-ghost" id="closeResultBtn">Close</button>
+            </div>
+            <div class="error-msg" id="progressError" style="display:none;"></div>
         </div>
     </div>
 
+    <!-- Video Preview Overlay -->
+    <div class="preview-overlay" id="previewOverlay">
+        <div class="preview-modal">
+            <div class="preview-modal-header">
+                <span class="preview-modal-title">Video Preview</span>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn btn-sm" id="previewDownloadBtn">↓ Download</button>
+                    <button class="btn btn-sm btn-ghost" id="previewCloseBtn">✕</button>
+                </div>
+            </div>
+            <div class="preview-modal-body">
+                <video id="previewVideo" controls></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Modules: order matters (Player & Pipeline before App) -->
+    <script src="{{ url_for('static', filename='player.js') }}"></script>
+    <script src="{{ url_for('static', filename='pipeline.js') }}"></script>
+    <script src="{{ url_for('static', filename='history.js') }}"></script>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,153 @@
+/* ── Pipeline Layer List ── */
+.pipeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pipeline-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: grab;
+    transition: all var(--transition);
+    user-select: none;
+}
+
+.pipeline-item:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-2);
+}
+
+.pipeline-item.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+}
+
+.pipeline-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+
+.pipeline-item.drag-over {
+    border-color: var(--accent);
+    border-style: dashed;
+}
+
+.drag-handle {
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: grab;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.pipeline-item-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.pipeline-item-index {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    background: var(--surface-3);
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.pipeline-item .remove-btn {
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+.pipeline-item:hover .remove-btn {
+    opacity: 1;
+}
+
+/* ── Add Layer Dropdown ── */
+.add-layer-wrapper {
+    position: relative;
+    margin-top: 8px;
+}
+
+.add-layer-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    overflow: hidden;
+    display: none;
+}
+
+.add-layer-menu.open {
+    display: block;
+}
+
+.add-layer-option {
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.add-layer-option:hover {
+    background: var(--surface-3);
+}
+
+.add-layer-option.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.add-layer-option .already-added {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+/* ── Layer Params Panel ── */
+.params-panel {
+    margin-top: 16px;
+}
+
+.params-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.params-panel-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.param-group {
+    margin-bottom: 10px;
+}
+
+.param-group label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+    font-family: var(--mono);
+}
