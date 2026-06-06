@@ -173,20 +173,16 @@
     border: 1px solid var(--border);
     border-radius: 50%;
     cursor: help;
-    position: relative;
     flex-shrink: 0;
 }
 
-.param-help::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
+/* Floating tooltip — appended to <body>, positioned via JS */
+.floating-tooltip {
+    position: fixed;
     width: max-content;
-    max-width: 220px;
-    white-space: normal;
-    padding: 6px 8px;
+    max-width: 90vw;
+    white-space: nowrap;
+    padding: 5px 10px;
     font-size: 11px;
     font-weight: 400;
     font-family: var(--mono);
@@ -200,11 +196,10 @@
     opacity: 0;
     visibility: hidden;
     transition: opacity var(--transition), visibility var(--transition);
-    z-index: 200;
+    z-index: 10000;
 }
 
-.param-help:hover::after,
-.param-help:focus-visible::after {
+.floating-tooltip.visible {
     opacity: 1;
     visibility: visible;
 }

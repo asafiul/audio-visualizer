@@ -74,7 +74,7 @@ class WaveformLayer(BaseLayer):
     
     def _render_simple(self, frame, audio_segment, time, amplitude):
         x_points = np.linspace(0, self.width - 1, len(audio_segment), dtype=np.int32)
-        y_points = (self.center_y + audio_segment * (self.height * 0.35)).astype(np.int32)
+        y_points = (self.center_y + audio_segment * (self.height * 0.18)).astype(np.int32)
         
         # Draw with gradient color
         for i in range(len(x_points) - 1):
@@ -87,7 +87,7 @@ class WaveformLayer(BaseLayer):
     
     def _render_mirror(self, frame, audio_segment, time, amplitude):
         x_points = np.linspace(0, self.width - 1, len(audio_segment), dtype=np.int32)
-        displacement = audio_segment * (self.height * 0.35)
+        displacement = audio_segment * (self.height * 0.18)
         y_top = (self.center_y - displacement).astype(np.int32)
         y_bottom = (self.center_y + displacement).astype(np.int32)
         
@@ -115,7 +115,7 @@ class WaveformLayer(BaseLayer):
     
     def _render_filled(self, frame, audio_segment, time, amplitude):
         x_points = np.linspace(0, self.width - 1, len(audio_segment), dtype=np.int32)
-        y_points = (self.center_y + audio_segment * (self.height * 0.35)).astype(np.int32)
+        y_points = (self.center_y + audio_segment * (self.height * 0.18)).astype(np.int32)
         
         points = np.column_stack([x_points, y_points])
         fill_points = np.vstack([
@@ -139,7 +139,7 @@ class WaveformLayer(BaseLayer):
     
     def _render_energy(self, frame, audio_segment, time, amplitude):
         x_points = np.linspace(0, self.width - 1, len(audio_segment), dtype=np.int32)
-        y_points = (self.center_y + audio_segment * (self.height * 0.35)).astype(np.int32)
+        y_points = (self.center_y + audio_segment * (self.height * 0.18)).astype(np.int32)
         
         for i in range(len(x_points) - 1):
             x1, y1 = x_points[i], y_points[i]

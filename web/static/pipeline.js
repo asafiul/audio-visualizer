@@ -21,6 +21,35 @@ window.Pipeline = (function () {
         return [parseInt(hex.substring(0, 2), 16), parseInt(hex.substring(2, 4), 16), parseInt(hex.substring(4, 6), 16)];
     }
 
+    // ── Floating tooltip (appended to body, never clipped) ──
+    const tooltipEl = document.createElement('div');
+    tooltipEl.className = 'floating-tooltip';
+    document.body.appendChild(tooltipEl);
+
+    function showTooltip(anchor, text) {
+        tooltipEl.textContent = text;
+        tooltipEl.classList.add('visible');
+        const rect = anchor.getBoundingClientRect();
+        // Position above the anchor, centered
+        tooltipEl.style.left = '0';
+        tooltipEl.style.top = '0';
+        // Measure tooltip size after making visible
+        const tw = tooltipEl.offsetWidth;
+        const th = tooltipEl.offsetHeight;
+        let left = rect.left + rect.width / 2 - tw / 2;
+        let top = rect.top - th - 6;
+        // Clamp to viewport
+        if (left < 8) left = 8;
+        if (left + tw > window.innerWidth - 8) left = window.innerWidth - 8 - tw;
+        if (top < 8) { top = rect.bottom + 6; } // flip below if no room above
+        tooltipEl.style.left = left + 'px';
+        tooltipEl.style.top = top + 'px';
+    }
+
+    function hideTooltip() {
+        tooltipEl.classList.remove('visible');
+    }
+
     function createParamLabel(key, description) {
         const label = document.createElement('label');
         label.className = 'param-label';
@@ -29,9 +58,12 @@ window.Pipeline = (function () {
             const help = document.createElement('span');
             help.className = 'param-help';
             help.textContent = '?';
-            help.setAttribute('data-tooltip', description);
-            help.setAttribute('tabindex', '0');
             help.setAttribute('aria-label', description);
+            help.addEventListener('mouseenter', () => showTooltip(help, description));
+            help.addEventListener('mouseleave', hideTooltip);
+            help.addEventListener('focus', () => showTooltip(help, description));
+            help.addEventListener('blur', hideTooltip);
+            help.setAttribute('tabindex', '0');
             label.appendChild(help);
         }
         return label;
