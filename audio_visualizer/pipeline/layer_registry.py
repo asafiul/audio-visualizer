@@ -16,6 +16,7 @@ class LayerRegistry:
         from .layers.circular_waveform_layer import CircularWaveformLayer
         from .layers.circular_spectrum_layer import CircularSpectrumLayer
         from .layers.circular_particles_layer import CircularParticlesLayer
+        from .layers.energy_rings_layer import EnergyRingsLayer
         
         self.register('background', BackgroundLayer)
         self.register('particles', ParticlesLayer)
@@ -25,6 +26,7 @@ class LayerRegistry:
         self.register('circular_waveform', CircularWaveformLayer)
         self.register('circular_spectrum', CircularSpectrumLayer)
         self.register('circular_particles', CircularParticlesLayer)
+        self.register('energy_rings', EnergyRingsLayer)
     
     def register(self, name: str, layer_class: Type[BaseLayer]):
         if not issubclass(layer_class, BaseLayer):

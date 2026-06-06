@@ -20,9 +20,11 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = Path(__file__).parent / 'uploads'
 app.config['OUTPUT_FOLDER'] = Path(__file__).parent / 'outputs'
+app.config['SAMPLES_FOLDER'] = Path(__file__).parent / 'samples'
 
 app.config['UPLOAD_FOLDER'].mkdir(exist_ok=True)
 app.config['OUTPUT_FOLDER'].mkdir(exist_ok=True)
+app.config['SAMPLES_FOLDER'].mkdir(exist_ok=True)
 
 jobs = {}
 
@@ -54,7 +56,7 @@ KNOWN_ENUMS = {
         'blend_mode': ['overwrite', 'add', 'multiply', 'screen', 'normal'],
     },
     'circular_waveform': {
-        'style': ['mirror', 'filled', 'bars'],
+        'style': ['mirror', 'filled', 'bars', 'energy'],
         'blend_mode': ['overwrite', 'add', 'multiply', 'screen', 'normal'],
     },
     'circular_spectrum': {
@@ -62,6 +64,9 @@ KNOWN_ENUMS = {
         'blend_mode': ['overwrite', 'add', 'multiply', 'screen', 'normal'],
     },
     'circular_particles': {
+        'blend_mode': ['overwrite', 'add', 'multiply', 'screen', 'normal'],
+    },
+    'energy_rings': {
         'blend_mode': ['overwrite', 'add', 'multiply', 'screen', 'normal'],
     },
 }
@@ -374,10 +379,34 @@ def api_layers():
     return jsonify(meta)
 
 
+@app.route('/api/samples')
+def api_samples():
+    """Return list of available sample audio files."""
+    samples_dir = app.config['SAMPLES_FOLDER']
+    AUDIO_EXT = {'.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'}
+    samples = []
+    for f in sorted(samples_dir.iterdir()):
+        if f.is_file() and f.suffix.lower() in AUDIO_EXT:
+            samples.append({'name': f.stem.replace('_', ' ').title(), 'filename': f.name})
+    return jsonify(samples)
+
+
+@app.route('/sample/<filename>')
+def serve_sample(filename):
+    """Serve a sample audio file."""
+    safe_name = secure_filename(filename)
+    sample_path = app.config['SAMPLES_FOLDER'] / safe_name
+    if not sample_path.exists():
+        return jsonify({'error': 'Sample not found'}), 404
+    return send_file(str(sample_path), as_attachment=False)
+
+
 @app.route('/upload', methods=['POST'])
 def upload():
     # Support reusing audio from a previous job
     reuse_job_id = request.form.get('reuse_audio_job_id')
+    sample_file = request.form.get('sample_file')
+
     if reuse_job_id:
         src_audio = None
         original_filename = 'audio.mp3'
@@ -403,6 +432,19 @@ def upload():
         import shutil
         audio_path = app.config['UPLOAD_FOLDER'] / f"{job_id}_{filename}"
         shutil.copy2(src_audio, str(audio_path))
+    elif sample_file:
+        # Use a sample audio file
+        safe_name = secure_filename(sample_file)
+        sample_path = app.config['SAMPLES_FOLDER'] / safe_name
+        if not sample_path.exists():
+            return jsonify({'error': 'Sample file not found'}), 400
+
+        job_id = str(uuid.uuid4())[:8]
+        original_filename = safe_name
+        filename = safe_name
+        import shutil
+        audio_path = app.config['UPLOAD_FOLDER'] / f"{job_id}_{filename}"
+        shutil.copy2(str(sample_path), str(audio_path))
     else:
         if 'audio' not in request.files:
             return jsonify({'error': 'No file selected'}), 400

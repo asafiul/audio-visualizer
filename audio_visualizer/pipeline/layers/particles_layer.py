@@ -21,91 +21,101 @@ class Particle:
         self.color_ratio = np.random.uniform(0, 1)
         
         self.life = 1.0
-        self.decay_min = particles_config.get('decay_min', 0.96)
-        self.decay_max = particles_config.get('decay_max', 0.99)
+        self.decay_min = particles_config.get('decay_min', 0.997)
+        self.decay_max = particles_config.get('decay_max', 0.999)
         self.decay = np.random.uniform(self.decay_min, self.decay_max)
         
         self.width = width
         self.height = height
         self.spawn_time = spawn_time
-        self.max_lifetime = config['pipeline']['particles'].get('max_lifetime', 300)
+        self.max_lifetime = particles_config.get('max_lifetime', 600)
         
         self.last_audio_force = [0, 0]
+        # Each particle has a unique phase offset for organic movement
+        self.phase_offset = np.random.uniform(0, 2 * np.pi)
+        # Each particle has its own preferred beat direction (random, not from center)
+        self.beat_angle = np.random.uniform(0, 2 * np.pi)
         
     def update(self, audio_force, beat_force, rms, time):
         particles_config = self.config['pipeline']['particles']
         
-        force_multiplier = particles_config.get('force_multiplier', 15.0)
-        max_speed = particles_config.get('max_speed', 12.0)
+        force_multiplier = particles_config.get('force_multiplier', 8.0)
+        max_speed = particles_config.get('max_speed', 6.0)
         bounce_strength = particles_config.get('bounce_strength', 0.85)
         
+        # Smooth audio influence - use rms to scale the coherent force direction
         audio_strength = rms * force_multiplier
         
-        self.vx += audio_force[0] * audio_strength * 0.5
-        self.vy += audio_force[1] * audio_strength * 0.5
+        # Apply audio force — each particle drifts in its own unique direction
+        # modulated by the global audio force for coherence
+        particle_angle = self.phase_offset + time * 0.3
+        px = np.cos(particle_angle) * 0.6 + audio_force[0] * 0.4
+        py = np.sin(particle_angle) * 0.6 + audio_force[1] * 0.4
+        self.vx += px * audio_strength * 0.12
+        self.vy += py * audio_strength * 0.12
         
+        # On beat: push each particle in its own random direction (beautiful scatter)
         if beat_force > 0:
-            beat_multiplier = beat_force * 8
-            self.vx += np.random.uniform(-beat_multiplier, beat_multiplier) * 0.7
-            self.vy += np.random.uniform(-beat_multiplier, beat_multiplier) * 0.7
-            self.life = min(1.0, self.life + 0.3)
+            # Slowly rotate beat direction over time for variety
+            self.beat_angle += np.random.uniform(-0.5, 0.5)
+            beat_push = beat_force * 2.5
+            self.vx += np.cos(self.beat_angle) * beat_push
+            self.vy += np.sin(self.beat_angle) * beat_push
+            # Refresh life slightly on beat
+            self.life = min(1.0, self.life + 0.1)
         
+        # Organic drift — each particle wanders in its own pattern
+        drift_strength = 0.05
+        self.vx += np.sin(time * 0.8 + self.phase_offset) * drift_strength
+        self.vy += np.cos(time * 0.6 + self.phase_offset * 1.3) * drift_strength
+        
+        # Move
         self.x += self.vx
         self.y += self.vy
         
-        self.vx *= 0.92
-        self.vy *= 0.92
+        # Damping - gentle friction so particles glide smoothly
+        self.vx *= 0.96
+        self.vy *= 0.96
         
+        # Speed limit
         speed = np.sqrt(self.vx**2 + self.vy**2)
         if speed > max_speed:
             scale = max_speed / speed
             self.vx *= scale
             self.vy *= scale
         
-        margin = 5
-        bounce = bounce_strength
+        # Wrap around screen edges — particles reappear on the opposite side
+        if self.x < 0:
+            self.x += self.width
+        elif self.x > self.width:
+            self.x -= self.width
+            
+        if self.y < 0:
+            self.y += self.height
+        elif self.y > self.height:
+            self.y -= self.height
         
-        if self.x < margin:
-            self.vx = abs(self.vx) * bounce
-            self.x = margin
-            self.vx += np.random.uniform(0.5, 2.0)
-            
-        elif self.x > self.width - margin:
-            self.vx = -abs(self.vx) * bounce
-            self.x = self.width - margin
-            self.vx += np.random.uniform(-2.0, -0.5)
-            
-        if self.y < margin:
-            self.vy = abs(self.vy) * bounce
-            self.y = margin
-            self.vy += np.random.uniform(0.5, 2.0)
-            
-        elif self.y > self.height - margin:
-            self.vy = -abs(self.vy) * bounce
-            self.y = self.height - margin
-            self.vy += np.random.uniform(-2.0, -0.5)
-        
+        # Gentle life decay - particles live much longer now
         self.life *= self.decay
-        
-        if abs(self.vx) < 0.1 and abs(self.vy) < 0.1 and self.life > 0.3:
-            self.life *= 0.95
         
         self.max_lifetime -= 1
         if self.max_lifetime <= 0:
             return False
             
-        return self.life > 0.05
+        return self.life > 0.03
     
     def get_color(self):
-        colors = self.config['visualization']['colors']
-        primary = np.array(colors['primary'])
-        secondary = np.array(colors['secondary'])
+        # Use per-layer color overrides if available
+        particles_config = self.config['pipeline']['particles']
+        global_colors = self.config['visualization']['colors']
+        primary = np.array(particles_config.get('color_primary', global_colors['primary']))
+        secondary = np.array(particles_config.get('color_secondary', global_colors['secondary']))
         
         color = (primary * (1 - self.color_ratio) + secondary * self.color_ratio).astype(np.uint8)
         return color
     
     def draw(self, frame):
-        if self.life < 0.05:
+        if self.life < 0.03:
             return
         
         particles_config = self.config['pipeline']['particles']
@@ -121,27 +131,30 @@ class Particle:
         color = (base_color * alpha).astype(np.uint8)
         bgr_color = (int(color[2]), int(color[1]), int(color[0]))
         
-        current_size = max(1, int(self.size * self.life))
+        current_size = max(1, int(self.size * (0.5 + self.life * 0.5)))
         
         cv2.circle(frame, (int(self.x), int(self.y)), current_size, bgr_color, -1)
         
+        # Glow effect for larger particles
         if current_size > 2:
-            glow_size = current_size + 1
-            glow_alpha = self.life * 0.4
+            glow_size = current_size + 2
+            glow_alpha = self.life * 0.3
             glow_color = (base_color * glow_alpha).astype(np.uint8)
             glow_bgr = (int(glow_color[2]), int(glow_color[1]), int(glow_color[0]))
             cv2.circle(frame, (int(self.x), int(self.y)), glow_size, glow_bgr, 1)
         
+        # Trail effect
         if trail_enabled:
             speed = np.sqrt(self.vx**2 + self.vy**2)
-            if speed > 2.0 and self.life > 0.3:
-                dx = -self.vx / max(speed, 0.1) * 5
-                dy = -self.vy / max(speed, 0.1) * 5
+            if speed > 1.5 and self.life > 0.2:
+                trail_len = min(speed * 2, 12)
+                dx = -self.vx / max(speed, 0.1) * trail_len
+                dy = -self.vy / max(speed, 0.1) * trail_len
                 
                 trail_x = int(self.x + dx)
                 trail_y = int(self.y + dy)
                 
-                trail_alpha = self.life * 0.6
+                trail_alpha = self.life * 0.4
                 trail_color = (base_color * trail_alpha).astype(np.uint8)
                 trail_bgr = (int(trail_color[2]), int(trail_color[1]), int(trail_color[0]))
                 
@@ -159,7 +172,10 @@ class ParticlesLayer(BaseLayer):
         
         self.rms_history = []
         self.force_history = []
-        self.max_history = 5
+        self.max_history = 10  # Longer smoothing window
+        
+        self.prev_rms = 0.0
+        self.prev_force = [0.0, 0.0]
         
         self.init_particles()
     
@@ -169,10 +185,10 @@ class ParticlesLayer(BaseLayer):
             self.particles.append(Particle(self.width, self.height, self.config))
     
     def get_audio_forces(self, time):
-        audio_segment = self.audio.get_audio_segment(time, 0.02)
+        audio_segment = self.audio.get_audio_segment(time, 0.05)
         
         if audio_segment is None or len(audio_segment) < 50:
-            return 0.0, [0, 0]
+            return self.prev_rms * 0.95, self.prev_force
         
         rms = np.sqrt(np.mean(audio_segment**2))
         
@@ -180,32 +196,40 @@ class ParticlesLayer(BaseLayer):
         if len(self.rms_history) > self.max_history:
             self.rms_history.pop(0)
         
-        smoothed_rms = np.mean(self.rms_history) if self.rms_history else rms
+        # Exponential moving average for smoother RMS
+        smoothed_rms = 0
+        weight_sum = 0
+        for i, r in enumerate(self.rms_history):
+            w = 1.5 ** i  # More recent = more weight
+            smoothed_rms += r * w
+            weight_sum += w
+        smoothed_rms /= weight_sum if weight_sum > 0 else 1
         
-        if len(audio_segment) >= 128:
-            fft = np.abs(np.fft.rfft(audio_segment[:128]))
+        if len(audio_segment) >= 256:
+            fft = np.abs(np.fft.rfft(audio_segment[:256]))
             
             if len(fft) > 10:
-                bass = np.mean(fft[:len(fft)//10])
-                mid_start = len(fft) // 10
+                bass = np.mean(fft[:len(fft)//8])
+                mid_start = len(fft) // 8
                 mid_end = len(fft) // 2
                 mids = np.mean(fft[mid_start:mid_end]) if mid_end > mid_start else 1.0
-                highs = np.mean(fft[-len(fft)//10:]) if len(fft) > 10 else 1.0
+                highs = np.mean(fft[mid_end:]) if len(fft) > mid_end else 1.0
                 
+                # Use slow-varying angles for coherent movement direction
+                # These change slowly so particles move in a consistent direction
                 t = time
-                
                 force_x = (
-                    np.sin(t * 3) * bass * 2.0 +
-                    np.cos(t * 8) * mids * 3.0 +
-                    np.sin(t * 15) * highs * 1.5
+                    np.sin(t * 0.3) * bass * 2.0 +
+                    np.cos(t * 0.7) * mids * 1.5 +
+                    np.sin(t * 1.2) * highs * 0.8
                 )
-                
                 force_y = (
-                    np.cos(t * 4) * bass * 2.0 +
-                    np.sin(t * 7) * mids * 3.0 +
-                    np.cos(t * 12) * highs * 1.5
+                    np.cos(t * 0.4) * bass * 2.0 +
+                    np.sin(t * 0.6) * mids * 1.5 +
+                    np.cos(t * 1.0) * highs * 0.8
                 )
                 
+                # Normalize to unit direction
                 force_mag = np.sqrt(force_x**2 + force_y**2)
                 if force_mag > 0:
                     force_x /= force_mag
@@ -213,10 +237,11 @@ class ParticlesLayer(BaseLayer):
                 
                 audio_force = [force_x, force_y]
             else:
-                audio_force = [np.sin(time * 5), np.cos(time * 4)]
+                audio_force = [np.sin(time * 0.5), np.cos(time * 0.4)]
         else:
-            audio_force = [np.sin(time * 5), np.cos(time * 4)]
+            audio_force = [np.sin(time * 0.5), np.cos(time * 0.4)]
         
+        # Scale force by audio energy
         audio_force[0] *= smoothed_rms
         audio_force[1] *= smoothed_rms
         
@@ -224,17 +249,21 @@ class ParticlesLayer(BaseLayer):
         if len(self.force_history) > self.max_history:
             self.force_history.pop(0)
         
+        # Smooth the force direction over time
         if self.force_history:
-            smoothed_force = np.mean(self.force_history, axis=0)
+            smoothed_force = np.mean(self.force_history, axis=0).tolist()
         else:
             smoothed_force = audio_force
+        
+        self.prev_rms = smoothed_rms
+        self.prev_force = smoothed_force
         
         return smoothed_rms, smoothed_force
     
     def _render_direct(self, time: float, frame: np.ndarray) -> np.ndarray:
         rms, audio_force = self.get_audio_forces(time)
         
-        beat_force = 1.5 if self.audio.is_beat_at_time(time, threshold=0.05) else 0.0
+        beat_force = 1.0 if self.audio.is_beat_at_time(time, threshold=0.05) else 0.0
         
         particles_to_remove = []
         
@@ -250,19 +279,14 @@ class ParticlesLayer(BaseLayer):
         target_count = self.particles_config.get('count', 150)
         current_count = len(self.particles)
         
-        spawn_rate = self.particles_config.get('spawn_rate', 0.1)
+        spawn_rate = self.particles_config.get('spawn_rate', 0.3)
         
         if current_count < target_count:
-            spawn_multiplier = 1.0 + min(rms * 10, 5.0)
+            # Spawn particles gradually, not all at once
             particles_needed = target_count - current_count
-            particles_to_spawn = min(int(particles_needed * spawn_multiplier * spawn_rate), 15)
+            particles_to_spawn = max(1, min(int(particles_needed * spawn_rate), 5))
             
             for _ in range(particles_to_spawn):
                 self.particles.append(Particle(self.width, self.height, self.config, time))
-        
-        if beat_force > 0:
-            for particle in self.particles:
-                if np.random.random() < 0.15:
-                    particle.color_ratio = (particle.color_ratio + 0.3) % 1.0
         
         return frame

@@ -132,6 +132,16 @@ window.Pipeline = (function () {
         renderPipeline(); renderParamsPanel();
     }
 
+    function sortParamEntries(entries) {
+        // Sort order: colors first, then enums/multi_enum, then booleans, then numeric/other
+        const typeOrder = { 'color': 0, 'enum': 1, 'multi_enum': 1, 'boolean': 2, 'float': 3, 'integer': 3, 'string': 4, 'unknown': 5 };
+        return entries.slice().sort((a, b) => {
+            const orderA = typeOrder[a[1].type] !== undefined ? typeOrder[a[1].type] : 5;
+            const orderB = typeOrder[b[1].type] !== undefined ? typeOrder[b[1].type] : 5;
+            return orderA - orderB;
+        });
+    }
+
     function renderParamsPanel() {
         const panel = $('paramsPanel');
         const content = $('paramsContent');
@@ -145,7 +155,7 @@ window.Pipeline = (function () {
 
         title.textContent = meta.label + ' Settings';
         content.innerHTML = '';
-        const entries = Object.entries(meta.params);
+        const entries = sortParamEntries(Object.entries(meta.params));
         if (entries.length === 0) { content.innerHTML = '<p style="color:var(--text-muted);font-size:12px;">No configurable parameters</p>'; return; }
 
         for (const [key, info] of entries) {

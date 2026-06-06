@@ -12,101 +12,127 @@ audio:
 
 visualization:
   colors:
-    primary: [0, 255, 255]    # Cyan - main color
-    secondary: [255, 0, 255]  # Magenta - secondary color
+    primary: [0, 255, 255]    # Cyan - main color (global default)
+    secondary: [255, 0, 255]  # Magenta - secondary color (global default)
     background: [0, 0, 0]     # Black - background color
 
 pipeline:
   order: ['background', 'particles', 'waveform', 'spectrum', 'effects']  # Layer rendering order
   
   background:
-    type: 'gradient'      # Background type: gradient/animated/solid
-    blend_mode: 'overwrite'  # Layer blending: overwrite/add/multiply/screen
-    opacity: 1.0          # Layer opacity (0.0-1.0)
-    color1: [10, 10, 30]  # Gradient color 1 (RGB)
-    color2: [30, 10, 50]  # Gradient color 2 (RGB)
-    direction: 'vertical' # Gradient direction: vertical/horizontal/radial
-    blur: 0               # Background blur amount (pixels)
+    color_primary: [10, 10, 30]   # Background gradient color 1 (RGB)
+    color_secondary: [30, 10, 50] # Background gradient color 2 (RGB)
+    type: 'gradient'              # Background type: gradient/animated/solid
+    direction: 'vertical'         # Gradient direction: vertical/horizontal/radial
+    blend_mode: 'overwrite'       # Layer blending: overwrite/add/multiply/screen
+    opacity: 1.0                  # Layer opacity (0.0-1.0)
+    blur: 0                       # Background blur amount (pixels)
 
   circular_waveform:
-    style: 'mirror'       # Circular waveform style: mirror/filled/bars
-    blend_mode: 'add'     # Layer blending mode
-    opacity: 0.8          # Waveform opacity
-    line_width: 2         # Waveform line thickness
-    window_duration: 0.5  # Audio window for waveform (seconds)
-    smoothing: 0.7        # Waveform smoothing (0.0-1.0)
-    radius: 300           # Circle radius
-    center_x: 960         # Circle center X coordinate
-    center_y: 540         # Circle center Y coordinate
-    rotation_speed: 0.2   # Rotation speed
+    color_primary: [0, 255, 255]    # Layer color override (RGB)
+    color_secondary: [255, 0, 255]  # Layer secondary color override (RGB)
+    style: 'energy'               # Circular waveform style: mirror/filled/bars/energy
+    blend_mode: 'add'             # Layer blending mode
+    opacity: 0.8                  # Waveform opacity
+    smoothing: 0.75               # Waveform smoothing (0.0-1.0)
+    line_width: 2                 # Waveform line thickness
+    window_duration: 0.05         # Audio window for waveform (seconds)
+    radius: 300                   # Circle radius
+    center_x: 960                 # Circle center X coordinate
+    center_y: 540                 # Circle center Y coordinate
+    rotation_speed: 0.2           # Rotation speed
+    points: 360                   # Number of points around circle
 
   circular_spectrum:
-    style: 'bars'         # Circular spectrum style: bars/wave
-    blend_mode: 'add'     # Layer blending
-    opacity: 0.7          # Spectrum opacity
-    bins: 64              # Number of frequency bins
-    smoothing: 0.3        # Height smoothing (0.0-1.0)
-    bar_spacing: 2        # Space between bars (pixels)
-    use_alpha: true       # Use alpha blending for bars
-    inner_radius: 200     # Inner radius for circular spectrum
-    outer_radius: 400     # Outer radius for circular spectrum
-    rotation_speed: 0.3   # Rotation speed for circular spectrum
+    color_primary: [0, 255, 255]    # Layer color override (RGB)
+    color_secondary: [255, 0, 255]  # Layer secondary color override (RGB)
+    style: 'bars'                 # Circular spectrum style: bars/wave
+    blend_mode: 'add'             # Layer blending
+    opacity: 0.7                  # Spectrum opacity
+    smoothing: 0.3                # Height smoothing (0.0-1.0)
+    bins: 48                      # Number of frequency bins
+    bar_spacing: 2                # Space between bars (pixels)
+    bar_width: 3                  # Bar line width
+    use_alpha: true               # Use alpha blending for bars
+    inner_radius: 250             # Inner radius for circular spectrum
+    outer_radius: 450             # Outer radius for circular spectrum
+    rotation_speed: 0.3           # Rotation speed for circular spectrum
 
   circular_particles:
-    blend_mode: 'add'     # Layer blending
-    opacity: 0.8          # Particles opacity
-    count: 100            # Number of particles
-    use_alpha: true       # Alpha blending for particles
-    max_speed: 8.0        # Maximum particle speed
-    min_speed: 0.1        # Minimum particle speed
-    orbit_radius_min: 100 # Minimum orbit radius
-    orbit_radius_max: 400 # Maximum orbit radius
-    force_multiplier: 20.0 # Audio force multiplier
-    decay_min: 0.98       # Minimum life decay per frame
-    decay_max: 0.995      # Maximum life decay per frame
-    spawn_rate: 5.0       # New particle spawn rate
+    color_primary: [0, 255, 255]    # Layer color override (RGB)
+    color_secondary: [255, 0, 255]  # Layer secondary color override (RGB)
+    blend_mode: 'add'             # Layer blending
+    opacity: 0.8                  # Particles opacity
+    use_alpha: true               # Alpha blending for particles
+    count: 100                    # Number of particles
+    max_speed: 8.0                # Maximum particle speed
+    min_speed: 0.1                # Minimum particle speed
+    orbit_radius_min: 100         # Minimum orbit radius
+    orbit_radius_max: 400         # Maximum orbit radius
+    force_multiplier: 20.0        # Audio force multiplier
+    decay_min: 0.998              # Minimum life decay per frame
+    decay_max: 0.9995             # Maximum life decay per frame
+    spawn_rate: 5.0               # New particle spawn rate
 
   waveform:
-    style: 'mirror'       # Waveform style: mirror/filled/simple/energy
-    blend_mode: 'add'     # Layer blending mode
-    opacity: 0.8          # Waveform opacity
-    line_width: 2         # Waveform line thickness
-    window_duration: 0.5  # Audio window for waveform (seconds)
-    smoothing: 0.7        # Waveform smoothing (0.0-1.0)
+    color_primary: [0, 255, 255]    # Layer color override (RGB)
+    color_secondary: [255, 0, 255]  # Layer secondary color override (RGB)
+    style: 'energy'               # Waveform style: mirror/filled/simple/energy
+    blend_mode: 'add'             # Layer blending mode
+    opacity: 0.8                  # Waveform opacity
+    smoothing: 0.5                # Waveform smoothing (0.0-1.0)
+    line_width: 2                 # Waveform line thickness
+    window_duration: 0.05         # Audio window for waveform (seconds)
 
   spectrum:
-    style: 'bars'         # Spectrum style: bars/circular/wave
-    blend_mode: 'add'     # Layer blending
-    opacity: 0.7          # Spectrum opacity
-    bins: 64              # Number of frequency bins
-    smoothing: 0.3        # Height smoothing (0.0-1.0)
-    bar_spacing: 2        # Space between bars (pixels)
-    use_alpha: true       # Use alpha blending for bars
-    inner_radius: 50      # Inner radius for circular style
-    rotation_speed: 0.3   # Rotation speed for circular style
-    wave_smoothing: 0.5   # Smoothing for wave style
-    wave_thickness: 2     # Line thickness for wave style
+    color_primary: [0, 255, 255]    # Layer color override (RGB)
+    color_secondary: [255, 0, 255]  # Layer secondary color override (RGB)
+    style: 'bars'                 # Spectrum style: bars/circular/wave
+    blend_mode: 'add'             # Layer blending
+    opacity: 0.7                  # Spectrum opacity
+    smoothing: 0.15               # Height smoothing (0.0-1.0)
+    bins: 64                      # Number of frequency bins
+    bar_spacing: 2                # Space between bars (pixels)
+    use_alpha: true               # Use alpha blending for bars
+    inner_radius: 50              # Inner radius for circular style
+    rotation_speed: 0.3           # Rotation speed for circular style
+    wave_smoothing: 0.5           # Smoothing for wave style
+    wave_thickness: 2             # Line thickness for wave style
 
   particles:
-    blend_mode: 'add'     # Layer blending
-    opacity: 0.8          # Particles opacity
-    count: 150            # Number of particles
-    use_alpha: true       # Alpha blending for particles
-    max_speed: 12.0       # Maximum particle speed
-    min_speed: 0.1        # Minimum particle speed
-    bounce_strength: 0.85 # Wall bounce strength (0.0-1.0)
-    force_multiplier: 15.0 # Audio force multiplier
-    decay_min: 0.96       # Minimum life decay per frame
-    decay_max: 0.99       # Maximum life decay per frame
-    spawn_rate: 0.1       # New particle spawn rate
-    trail_enabled: true   # Enable particle trails
+    color_primary: [0, 255, 255]    # Layer color override (RGB)
+    color_secondary: [255, 0, 255]  # Layer secondary color override (RGB)
+    blend_mode: 'add'             # Layer blending
+    opacity: 0.8                  # Particles opacity
+    use_alpha: true               # Alpha blending for particles
+    trail_enabled: true           # Enable particle trails
+    count: 150                    # Number of particles
+    max_speed: 6.0                # Maximum particle speed
+    min_speed: 0.1                # Minimum particle speed
+    bounce_strength: 0.85         # Wall bounce strength (0.0-1.0)
+    force_multiplier: 8.0         # Audio force multiplier
+    decay_min: 0.997              # Minimum life decay per frame (slower decay = longer life)
+    decay_max: 0.999              # Maximum life decay per frame
+    spawn_rate: 0.3               # New particle spawn rate
+    max_lifetime: 600             # Maximum frames a particle can live
+
+  energy_rings:
+    color_primary: [0, 255, 255]    # Layer color override (RGB)
+    color_secondary: [255, 0, 255]  # Layer secondary color override (RGB)
+    blend_mode: 'add'             # Layer blending
+    opacity: 0.8                  # Rings opacity
+    glow_enabled: true            # Enable glow on high-energy rings
+    num_rings: 12                 # Number of concentric rings
+    base_thickness: 2             # Base ring line thickness
+    pulse_strength: 0.5           # How much rings pulse with audio (0.0-1.0)
+    rotation_speed: 0.15          # Ring rotation speed
 
   effects:
-    blend_mode: 'normal'  # Layer blending
-    opacity: 1.0          # Effects opacity
-    effects: ['glow', 'vignette']  # List of effects: glow/vignette/grain/chromatic
-    glow_intensity: 0.3   # Glow effect intensity (0.0-1.0)
-    glow_size: 15         # Glow blur kernel size
-    vignette_strength: 0.3 # Vignette darkness (0.0-1.0)
-    grain_amount: 0.05    # Film grain amount (0.0-1.0)
-    chromatic_shift: 2    # Chromatic aberration shift (pixels)
+    blend_mode: 'normal'          # Layer blending
+    opacity: 1.0                  # Effects opacity
+    effects: ['glow', 'vignette'] # List of effects: glow/vignette/grain/chromatic
+    glow_intensity: 0.3           # Glow effect intensity (0.0-1.0)
+    glow_size: 15                 # Glow blur kernel size
+    vignette_strength: 0.3        # Vignette darkness (0.0-1.0)
+    grain_amount: 0.05            # Film grain amount (0.0-1.0)
+    chromatic_shift: 2            # Chromatic aberration shift (pixels)

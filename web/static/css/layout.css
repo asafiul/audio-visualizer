@@ -188,6 +188,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    width: 100%;
 }
 
 .upload-icon-sm {
@@ -200,6 +201,34 @@
     font-size: 13px;
     color: var(--text-dim);
     margin-top: 0;
+}
+
+/* Sample audio button */
+.sample-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-family: var(--font);
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.sample-btn:hover {
+    background: rgba(99, 102, 241, 0.25);
+    border-color: var(--accent);
+}
+
+.upload-area.has-file .sample-btn {
+    display: none;
 }
 
 .upload-row .upload-filename {

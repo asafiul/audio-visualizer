@@ -45,10 +45,24 @@ class BaseLayer(ABC):
             blended = cv2.add(background, (foreground * self.opacity).astype(np.uint8))
             return np.clip(blended, 0, 255)
         elif self.blend_mode == 'multiply':
+            # Multiply blend: darken by multiplying pixel values
+            # Only apply where foreground has content (non-black pixels)
             bg_float = background.astype(np.float32) / 255.0
             fg_float = foreground.astype(np.float32) / 255.0
-            result = bg_float * (fg_float * self.opacity + (1 - self.opacity))
-            return (result * 255).astype(np.uint8)
+            
+            # Create a mask of where foreground has content
+            fg_mask = np.any(foreground > 5, axis=2).astype(np.float32)
+            fg_mask = fg_mask[:, :, np.newaxis]
+            
+            # Multiply blend where foreground exists, keep background elsewhere
+            multiplied = (bg_float * fg_float * 255).astype(np.uint8)
+            
+            # Blend between original background and multiplied result
+            # based on opacity and foreground mask
+            blend_factor = fg_mask * self.opacity
+            result = (background.astype(np.float32) * (1 - blend_factor) + 
+                     multiplied.astype(np.float32) * blend_factor)
+            return np.clip(result, 0, 255).astype(np.uint8)
         elif self.blend_mode == 'screen':
             bg_float = 1.0 - background.astype(np.float32) / 255.0
             fg_float = 1.0 - foreground.astype(np.float32) / 255.0
@@ -58,7 +72,20 @@ class BaseLayer(ABC):
             return foreground
     
     def get_color_gradient(self, ratio: float):
-        colors = self.config['visualization']['colors']
-        primary = np.array(colors['primary'])
-        secondary = np.array(colors['secondary'])
+        """Get interpolated color between primary and secondary.
+        
+        Checks for per-layer color overrides (color_primary, color_secondary)
+        in the layer config first, then falls back to global visualization colors.
+        """
+        # Per-layer color override
+        if self.layer_config.get('color_primary'):
+            primary = np.array(self.layer_config['color_primary'])
+        else:
+            primary = np.array(self.config['visualization']['colors']['primary'])
+        
+        if self.layer_config.get('color_secondary'):
+            secondary = np.array(self.layer_config['color_secondary'])
+        else:
+            secondary = np.array(self.config['visualization']['colors']['secondary'])
+        
         return (primary * (1 - ratio) + secondary * ratio).astype(np.uint8)

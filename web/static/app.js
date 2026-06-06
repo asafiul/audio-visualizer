@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const $ = (id) => document.getElementById(id);
     let currentJobId = null;
     let restoredJobId = null;  // job_id whose audio we can reuse
+    let sampleFile = null;     // filename of selected sample audio
 
     // ── DOM refs ──
     const headerHome    = $('headerHome');
@@ -41,14 +42,42 @@ document.addEventListener('DOMContentLoaded', () => {
             Pipeline.init(data.layers, data.default_order);
             Player.init();
             History.render({ onRestore: restoreFromHistory, onPreview: showPreview });
+
+            // Load available samples
+            loadSamples();
         } catch (e) {
             console.error('Failed to load layer metadata:', e);
         }
     }
 
+    async function loadSamples() {
+        try {
+            const resp = await fetch('/api/samples');
+            const samples = await resp.json();
+            const btn = $('useSampleBtn');
+            if (samples.length > 0) {
+                btn.style.display = '';
+                btn.dataset.filename = samples[0].filename;
+                btn.dataset.name = samples[0].name;
+            }
+        } catch (e) {
+            console.error('Failed to load samples:', e);
+        }
+    }
+
+    function selectSample(filename) {
+        sampleFile = filename;
+        restoredJobId = null;
+        audioFile.value = '';
+        fileName.textContent = filename;
+        uploadArea.classList.add('has-file');
+        Player.loadAudio('/sample/' + filename);
+        updateRenderBtn();
+    }
+
     // ── Render button state ──
     function updateRenderBtn() {
-        const hasAudio = audioFile.files.length > 0 || restoredJobId;
+        const hasAudio = audioFile.files.length > 0 || restoredJobId || sampleFile;
         renderBtn.disabled = !(hasAudio && Pipeline.getCount() > 0);
     }
 
@@ -70,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('fps').value = '30';
         currentJobId = null;
         restoredJobId = null;
+        sampleFile = null;
         updateRenderBtn();
     }
 
@@ -83,8 +113,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     audioFile.addEventListener('change', onFileSelected);
 
+    // ── Sample Button ──
+    $('useSampleBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const btn = $('useSampleBtn');
+        selectSample(btn.dataset.filename);
+    });
+
     function onFileSelected() {
         restoredJobId = null;  // user picked a new file, clear reuse
+        sampleFile = null;     // user picked a new file, clear sample
         if (audioFile.files.length > 0) {
             const file = audioFile.files[0];
             fileName.textContent = file.name;
@@ -123,7 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = audioFile.files[0];
         const hasNewFile = !!file;
         const hasReuse = !!restoredJobId;
-        if ((!hasNewFile && !hasReuse) || Pipeline.getCount() === 0) return;
+        const hasSample = !!sampleFile;
+        if ((!hasNewFile && !hasReuse && !hasSample) || Pipeline.getCount() === 0) return;
 
         const res = $('resolution').value.split('x');
         const fps = $('fps').value;
@@ -142,6 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData();
         if (hasNewFile) {
             formData.append('audio', file);
+        } else if (hasSample) {
+            formData.append('sample_file', sampleFile);
         } else {
             formData.append('reuse_audio_job_id', restoredJobId);
         }
