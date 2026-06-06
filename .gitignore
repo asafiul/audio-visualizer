@@ -42,6 +42,10 @@ output/
 *.mov
 *.gif
 
+# Allow sample audio files
+!web/samples/*.mp3
+!web/samples/*.wav
+
 # Configs for development
 configs/local/
 configs/dev/
