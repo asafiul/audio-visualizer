@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from audio_visualizer.config_loader import ConfigLoader
 from audio_visualizer.audio_processor import AudioProcessor
 from audio_visualizer.visualizer_factory import VisualizerFactory
-from audio_visualizer.video_renderer import VideoRenderer
+# from audio_visualizer.video_renderer import VideoRenderer
 from audio_visualizer.pipeline.layer_registry import LayerRegistry
 
 app = Flask(__name__)
@@ -65,6 +65,83 @@ KNOWN_ENUMS = {
         'blend_mode': ['overwrite', 'add', 'multiply', 'screen', 'normal'],
     },
 }
+
+
+# Короткие подсказки к параметрам pipeline (на русском)
+COMMON_PARAM_DESCRIPTIONS_RU = {
+    'blend_mode': 'Как смешивать слой с нижними',
+    'opacity': 'Прозрачность слоя (0 — невидим, 1 — полный)',
+    'style': 'Стиль отображения',
+    'smoothing': 'Плавность анимации (0–1)',
+    'line_width': 'Толщина линии, px',
+    'window_duration': 'Длина аудио-окна, сек',
+    'bins': 'Число частотных полос',
+    'bar_spacing': 'Отступ между столбцами, px',
+    'use_alpha': 'Полупрозрачная отрисовка',
+    'rotation_speed': 'Скорость вращения',
+    'count': 'Количество частиц',
+    'max_speed': 'Максимальная скорость частиц',
+    'min_speed': 'Минимальная скорость частиц',
+    'force_multiplier': 'Насколько сильно звук толкает частицы',
+    'decay_min': 'Мин. затухание жизни частицы за кадр',
+    'decay_max': 'Макс. затухание жизни частицы за кадр',
+    'spawn_rate': 'Как часто появляются новые частицы',
+}
+
+LAYER_PARAM_DESCRIPTIONS_RU = {
+    'background': {
+        'type': 'Тип фона: градиент, однотонный или анимированный',
+        'color1': 'Первый цвет градиента',
+        'color2': 'Второй цвет градиента',
+        'direction': 'Направление градиента',
+        'blur': 'Размытие фона, px',
+    },
+    'waveform': {
+        'style': 'Форма волны: зеркало, заливка, простая, энергия',
+    },
+    'spectrum': {
+        'style': 'Вид спектра: столбцы, круг или волна',
+        'inner_radius': 'Внутренний радиус в круговом режиме, px',
+        'wave_smoothing': 'Сглаживание линии волны (0–1)',
+        'wave_thickness': 'Толщина линии волны, px',
+    },
+    'particles': {
+        'bounce_strength': 'Сила отскока от краёв экрана (0–1)',
+        'trail_enabled': 'Рисовать шлейф за частицами',
+    },
+    'circular_waveform': {
+        'style': 'Форма круговой волны: зеркало, заливка или столбцы',
+        'radius': 'Радиус круга, px',
+        'center_x': 'Положение центра по горизонтали, px',
+        'center_y': 'Положение центра по вертикали, px',
+    },
+    'circular_spectrum': {
+        'style': 'Вид кругового спектра: столбцы или волна',
+        'inner_radius': 'Внутренний радиус кольца, px',
+        'outer_radius': 'Внешний радиус кольца, px',
+    },
+    'circular_particles': {
+        'orbit_radius_min': 'Мин. радиус орбиты частиц, px',
+        'orbit_radius_max': 'Макс. радиус орбиты частиц, px',
+    },
+    'effects': {
+        'effects': 'Эффекты постобработки: свечение, виньетка, зерно, аберрация',
+        'glow_intensity': 'Яркость свечения (0–1)',
+        'glow_size': 'Размер размытия свечения, px',
+        'vignette_strength': 'Затемнение по краям кадра (0–1)',
+        'grain_amount': 'Интенсивность плёночного зерна (0–1)',
+        'chromatic_shift': 'Сдвиг RGB-каналов для аберрации, px',
+    },
+}
+
+
+def get_param_description(layer_name, key):
+    """Return a short Russian tooltip for a pipeline parameter."""
+    return (
+        LAYER_PARAM_DESCRIPTIONS_RU.get(layer_name, {}).get(key)
+        or COMMON_PARAM_DESCRIPTIONS_RU.get(key)
+        or ''
+    )
 
 
 def infer_param_type(key, value, layer_name):
@@ -159,7 +236,11 @@ def get_layers_metadata():
         layer_defaults = pipeline_config.get(layer_name, {})
         params = {}
         for key, value in layer_defaults.items():
-            params[key] = infer_param_type(key, value, layer_name)
+            param_info = infer_param_type(key, value, layer_name)
+            description = get_param_description(layer_name, key)
+            if description:
+                param_info['description'] = description
+            params[key] = param_info
 
         layers_meta[layer_name] = {
             'name': layer_name,

@@ -21,6 +21,22 @@ window.Pipeline = (function () {
         return [parseInt(hex.substring(0, 2), 16), parseInt(hex.substring(2, 4), 16), parseInt(hex.substring(4, 6), 16)];
     }
 
+    function createParamLabel(key, description) {
+        const label = document.createElement('label');
+        label.className = 'param-label';
+        label.appendChild(document.createTextNode(key));
+        if (description) {
+            const help = document.createElement('span');
+            help.className = 'param-help';
+            help.textContent = '?';
+            help.setAttribute('data-tooltip', description);
+            help.setAttribute('tabindex', '0');
+            help.setAttribute('aria-label', description);
+            label.appendChild(help);
+        }
+        return label;
+    }
+
     function getDefaultParams(layerName) {
         const meta = layersMeta[layerName];
         if (!meta) return {};
@@ -138,13 +154,13 @@ window.Pipeline = (function () {
             group.className = 'param-group';
 
             if (info.type === 'enum') {
-                group.innerHTML = '<label>' + key + '</label>';
+                group.appendChild(createParamLabel(key, info.description));
                 const sel = document.createElement('select');
                 for (const o of info.options) { const op = document.createElement('option'); op.value = o; op.textContent = o; if (o === val) op.selected = true; sel.appendChild(op); }
                 sel.addEventListener('change', () => { layer.params[key] = sel.value; });
                 group.appendChild(sel);
             } else if (info.type === 'multi_enum') {
-                group.innerHTML = '<label>' + key + '</label>';
+                group.appendChild(createParamLabel(key, info.description));
                 const cg = document.createElement('div'); cg.className = 'chip-group';
                 const selected = new Set(Array.isArray(val) ? val : []);
                 for (const o of info.options) {
@@ -161,11 +177,15 @@ window.Pipeline = (function () {
                 group.appendChild(cg);
             } else if (info.type === 'boolean') {
                 const row = document.createElement('div'); row.className = 'toggle-row';
-                row.innerHTML = '<label>' + key + '</label><label class="toggle"><input type="checkbox" ' + (val ? 'checked' : '') + '><span class="toggle-track"></span></label>';
+                row.appendChild(createParamLabel(key, info.description));
+                const toggle = document.createElement('label');
+                toggle.className = 'toggle';
+                toggle.innerHTML = '<input type="checkbox" ' + (val ? 'checked' : '') + '><span class="toggle-track"></span>';
+                row.appendChild(toggle);
                 row.querySelector('input').addEventListener('change', (e) => { layer.params[key] = e.target.checked; });
                 group.appendChild(row);
             } else if (info.type === 'integer' || info.type === 'float') {
-                group.innerHTML = '<label>' + key + '</label>';
+                group.appendChild(createParamLabel(key, info.description));
                 const wrap = document.createElement('div'); wrap.className = 'number-input';
                 const step = info.step || (info.type === 'float' ? 0.1 : 1);
                 const mn = info.min !== undefined ? info.min : 0;
@@ -182,7 +202,7 @@ window.Pipeline = (function () {
                 wrap.appendChild(dec); wrap.appendChild(inp); wrap.appendChild(inc);
                 group.appendChild(wrap);
             } else if (info.type === 'color') {
-                group.innerHTML = '<label>' + key + '</label>';
+                group.appendChild(createParamLabel(key, info.description));
                 const row = document.createElement('div'); row.className = 'color-row';
                 const sw = document.createElement('div'); sw.className = 'color-swatch';
                 const ci = document.createElement('input'); ci.type = 'color'; ci.value = rgbToHex(val);
@@ -191,12 +211,16 @@ window.Pipeline = (function () {
                 sw.appendChild(ci); row.appendChild(sw); row.appendChild(hl);
                 group.appendChild(row);
             } else if (info.type === 'string') {
-                group.innerHTML = '<label>' + key + '</label>';
+                group.appendChild(createParamLabel(key, info.description));
                 const ti = document.createElement('input'); ti.type = 'text'; ti.value = val;
                 ti.addEventListener('change', () => { layer.params[key] = ti.value; });
                 group.appendChild(ti);
             } else {
-                group.innerHTML = '<label>' + key + '</label><span style="font-size:12px;color:var(--text-muted);">' + JSON.stringify(val) + '</span>';
+                group.appendChild(createParamLabel(key, info.description));
+                const fallback = document.createElement('span');
+                fallback.style.cssText = 'font-size:12px;color:var(--text-muted);';
+                fallback.textContent = JSON.stringify(val);
+                group.appendChild(fallback);
             }
             content.appendChild(group);
         }

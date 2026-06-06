@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python *)",
+      "Bash(pip install *)",
+      "Bash(conda *)",
+      "Bash(curl *)",
+      "Bash(sleep *)",
+      "Bash(lsof *)"
+    ]
+  },
+  "$version": 4
+}
